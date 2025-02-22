@@ -108,4 +108,4 @@ child.info("This is a child info message")
 child.error("This is a child error message")
 child.warn("This is a child warn message")
 
-// throw new Error("This is an error message")
+throw new Error("This is an error message")
