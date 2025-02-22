@@ -19,12 +19,12 @@ export const transformLogInfo = (logger: winston.Logger) => format((info) => {
 });
 
 /**
- * Custom log message format. This function is used to format the log message in a custom way.
+ * Custom log message format for development. This function is used to format the log message in a custom way.
  * It can be used to add colors to the log message.
  * @param colorizer - Winston colorizer instance
  * @returns Winston format instance
  */
-export const formatLogMessage = (colorizer: winston.Logform.Colorizer) => {
+export const devFormatLogMessage = (colorizer: winston.Logform.Colorizer) => {
     return format.printf((info) => {
         const {
             timestamp,
