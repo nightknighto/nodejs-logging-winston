@@ -76,9 +76,6 @@ const logger = winston.createLogger({
     level: isProduction ? 'info' : 'trace', // set the maximum log level priority to output. Any log level with index higher than this will not be output.
     exceptionHandlers: [new winston.transports.File({ filename: 'exceptions.log' })],
     rejectionHandlers: [new winston.transports.File({ filename: 'rejections.log' })],
-    defaultMeta: {
-        label: "Main",
-    } // add default metadata to the log message. This is added to all log messages unless overridden
     // exitOnError: false, // do not exit the process on error
 }) as CustomLogger;
 
