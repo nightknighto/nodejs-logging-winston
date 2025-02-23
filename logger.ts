@@ -1,6 +1,8 @@
 import winston, { format } from "winston";
 import { transformLogInfo, devFormatLogMessage } from "./formatters";
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 /**
  * Custom log levels and their colors
  */
@@ -54,23 +56,28 @@ const logPartsColorizer = winston.format.colorize({
     colors: coloredParts,
 });
 
-const logger = winston.createLogger({
-    levels: logLevels.levels, // override the default log levels with custom log levels
-    level: "trace", // set the maximum log level priority to output. Any log level with index higher than this will not be output.
-    exceptionHandlers: [
-        new winston.transports.File({ filename: "exceptions.log" }), // output exceptions to a file
-    ],
-    rejectionHandlers: [
-        new winston.transports.File({ filename: "rejections.log" }), // output rejections to a file
-    ],
-    // exitOnError: false, // do not exit the process on error
-}) as winston.Logger &
-    Record<keyof typeof logLevels.levels, winston.LeveledLogMethod> & // define the new log level functions to the logger. These functions are automatically implemented when using custom log levels
-    {
+/**
+ * Extends the Winston Logger type with custom log level methods while removing default log levels.
+ *
+ * The type ensures that:
+ * 1. All custom log levels defined in logLevels.levels are available as methods
+ * 2. Default Winston log levels (verbose, silly, http) are explicitly removed
+ */
+type CustomLogger = winston.Logger &
+    Record<keyof typeof logLevels.levels, winston.LeveledLogMethod> & {
+        // define the new log level functions to the logger. These functions are automatically implemented when using custom log levels
         verbose: never;
         silly: never;
         http: never;
     }; // prevent usage of the default log level functions because they are no longer implemented after using custom log levels
+
+const logger = winston.createLogger({
+    levels: logLevels.levels, // override the default log levels with custom log levels
+    level: isProduction ? 'info' : 'trace', // set the maximum log level priority to output. Any log level with index higher than this will not be output.
+    exceptionHandlers: [new winston.transports.File({ filename: 'exceptions.log' })],
+    rejectionHandlers: [new winston.transports.File({ filename: 'rejections.log' })],
+    // exitOnError: false, // do not exit the process on error
+}) as CustomLogger;
 
 // ----------------------------------------------------------
 
@@ -78,8 +85,8 @@ const developmentFormat = format.combine(
     format.timestamp({ format: "DD/MM/YYYY, h:mm:ss A" }), // add a timestamp to the log message. See https://github.com/taylorhakes/fecha?tab=readme-ov-file#formatting-tokens for formatting options
     format.label({ label: "Main" }), // add a label field to the log message
     transformLogInfo(logger)(), // transform the log message info or filter it. Like a middleware
+    devFormatLogMessage(logPartsColorizer), // create a custom log message format, possibly with custom colors
     winston.format.colorize({ all: true }), // add the predefined log level colors to the logs. Put at the bottom to colorize the entire log line
-    devFormatLogMessage(logPartsColorizer) // create a custom log message format, possibly with custom colors
 );
 
 const prodFormat = format.combine(
@@ -92,12 +99,12 @@ const prodFormat = format.combine(
 let consoleFormat: winston.Logform.Format;
 let fileFormat: winston.Logform.Format;
 
-if (process.env.NODE_ENV !== "production") {
-    consoleFormat = developmentFormat;
-    fileFormat = format.combine(developmentFormat, format.uncolorize()); // remove colors from the log message
-} else {
+if (isProduction) {
     consoleFormat = prodFormat;
     fileFormat = prodFormat;
+} else {
+    consoleFormat = developmentFormat;
+    fileFormat = format.combine(developmentFormat, format.uncolorize()); // remove colors from the log message
 }
 
 logger.add(
