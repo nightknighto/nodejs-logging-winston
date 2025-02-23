@@ -4,6 +4,7 @@ import logger from "./logger"
 logger.profile('test') // first way to start a timer
 const profiler = logger.startTimer() // second way to start a timer
 
+logger.log("info", "This is a manual log message")
 logger.fatal("This is a fatal message")
 logger.error("This is an error message")
 logger.warn("This is a warning message")

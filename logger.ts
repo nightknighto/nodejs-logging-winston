@@ -76,6 +76,9 @@ const logger = winston.createLogger({
     level: isProduction ? 'info' : 'trace', // set the maximum log level priority to output. Any log level with index higher than this will not be output.
     exceptionHandlers: [new winston.transports.File({ filename: 'exceptions.log' })],
     rejectionHandlers: [new winston.transports.File({ filename: 'rejections.log' })],
+    defaultMeta: {
+        label: "Main",
+    } // add default metadata to the log message. This is added to all log messages unless overridden
     // exitOnError: false, // do not exit the process on error
 }) as CustomLogger;
 
@@ -83,7 +86,7 @@ const logger = winston.createLogger({
 
 const developmentFormat = format.combine(
     format.timestamp({ format: "DD/MM/YYYY, h:mm:ss A" }), // add a timestamp to the log message. See https://github.com/taylorhakes/fecha?tab=readme-ov-file#formatting-tokens for formatting options
-    format.label({ label: "Main" }), // add a label field to the log message
+    format.label({ label: "Main" }), // add a label field to the log message. While it seems redundant due to defaultMeta, only this works for profile methods. Leave it for now.
     transformLogInfo(logger)(), // transform the log message info or filter it. Like a middleware
     devFormatLogMessage(logPartsColorizer), // create a custom log message format, possibly with custom colors
     winston.format.colorize({ all: true }), // add the predefined log level colors to the logs. Put at the bottom to colorize the entire log line
